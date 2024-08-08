@@ -1,0 +1,26 @@
+---
+windows:
+  children:
+    dc:
+      hosts:
+        10.13.37.10:
+    win10def:
+      hosts:
+        10.13.37.150:
+    win10xdr:
+      hosts:
+        10.13.37.160:
+
+linux:
+  children:
+    splunk:
+      hosts:
+        10.13.37.50:
+    linux:
+      hosts:
+        10.13.37.170:
+
+splunk:
+  children:
+    windows:
+    linux:
