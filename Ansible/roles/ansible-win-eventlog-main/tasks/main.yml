@@ -1,0 +1,9 @@
+---
+
+- name: Include windows-logging-registry
+  ansible.builtin.include_tasks: windows-logging-registry.yml
+# - ansible.builtin.include_tasks: windows-logging-wevtutil.yml
+
+- name: Include windows-amsi
+  ansible.builtin.include_tasks: windows-amsi.yml
+  when: win_eventlog_amsi_logging

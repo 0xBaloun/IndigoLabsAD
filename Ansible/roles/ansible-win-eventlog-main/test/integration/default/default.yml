@@ -1,0 +1,7 @@
+---
+
+- name: Test play
+  hosts: all
+  become_method: ansible.builtin.runas
+  roles:
+    - juju4.win_eventlog

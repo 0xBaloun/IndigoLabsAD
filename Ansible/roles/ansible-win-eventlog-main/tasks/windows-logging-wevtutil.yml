@@ -1,0 +1,40 @@
+---
+
+# Review evt/log files to 100-500M + corresponding GPO
+## https://msdn.microsoft.com/en-us/library/windows/desktop/aa363648(v=vs.85).aspx
+## https://support.microsoft.com/en-ca/kb/957662
+## https://www.malwarearchaeology.com/logging
+
+## FIXME! not idempotent unlike win_regedit module but more readable
+- name: Update Windows Log event size
+  ansible.windows.win_command: "wevtutil sl \"{{ item }}\" /ms:{{ win_eventlog_maxsize }} /rt:true /ab:true"
+  with_items:
+    - Microsoft-Windows-Powershell/Admin
+    - Microsoft-Windows-Sysmon
+    - Microsoft-Windows-Sysmon/Operational
+    - Application
+    - Security
+    - System
+    - Setup
+    - Microsoft-Windows-DNS-Client/Operational
+    - Microsoft-Windows-DistributedCOM
+    # - Microsoft-Windows-DistributedCOM/Operational
+    - Microsoft-Windows-Powershell/Operational
+    - Microsoft-Windows-WinRM/Operational
+    ## win10
+    - Microsoft-Windows-WMI-Activity/Operational
+    ## FIXME! too many arguments, even with quote
+    # - Internet Explorer
+    - Microsoft-Windows-AppLocker/EXE and DLL
+    - Microsoft-Windows-AppLocker/MSI and Script
+    - Microsoft-Windows-AppLocker/Packaged app-Deployment
+    - Microsoft-Windows-AppLocker/Packaged app-Execution
+    # ignore_errors: true
+
+- name: Ensure TaskScheduler logs are enabled
+  ansible.windows.win_command: "wevtutil set-log {{ item }} /enabled:true /ms:{{ win_eventlog_maxsize }} /rt:true /ab:true"
+  with_items:
+    - Microsoft-Windows-TaskScheduler/Operational
+    - Microsoft-Windows-DNS-Client/Operational
+    - Microsoft-Windows-Kernel-Network
+    - Microsoft-Windows-Kernel-Process
