@@ -1,0 +1,27 @@
+---
+
+- name: Upload Enable Registry Auditing script
+  ansible.windows.win_template:
+    src: EnableRegistryAudit.ps1.j2
+    dest: "{{ win_temp_dir }}\\EnableRegistryAudit.ps1"
+
+- name: Enable Registry auditing for selected paths
+  ansible.windows.win_shell: "Powershell -Exec Bypass -File \"{{ win_temp_dir }}\\EnableRegistryAudit.ps1\" \"{{ item.k }}\" \"{{ item.i }}\""
+  with_items: "{{ win_audit_regpaths }}"
+  register: setacl_results
+- name: Debug | setacl_results
+  ansible.builtin.debug:
+    var: setacl_results
+
+- name: Upload Disable Registry Auditing script
+  ansible.windows.win_template:
+    src: DisableRegistryAudit.ps1.j2
+    dest: "{{ win_temp_dir }}\\DisableRegistryAudit.ps1"
+
+- name: Disable Registry auditing for selected paths
+  ansible.windows.win_shell: "Powershell -Exec Bypass -File \"{{ win_temp_dir }}\\DisableRegistryAudit.ps1\" \"{{ item.k }}\" \"{{ item.i }}\""
+  with_items: "{{ win_audit_regpaths_exclude }}"
+  register: setacl_results
+- name: Debug | setacl_results
+  ansible.builtin.debug:
+    var: setacl_results

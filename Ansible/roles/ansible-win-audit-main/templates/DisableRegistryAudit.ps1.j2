@@ -1,0 +1,26 @@
+{{ ansible_managed | comment }}
+# https://stackoverflow.com/questions/32585386/how-to-remove-registry-audit-rules
+if ($Args.count -eq 1) {
+$TargetRegistry = [string]$Args
+$InheritType = "ContainerInherit,ObjectInherit"
+} else {
+$TargetRegistry = [string]$($Args[1])
+$InheritType = [string]$($Args[2])
+}
+
+$AuditUser = "Everyone"
+$AuditRules = "{{ win_regauditrules }}"
+$AuditPropagationFlags = "None"
+$AuditType = "Success"
+$AuditRule = New-Object System.Security.AccessControl.RegistryAuditRule ($AuditUser,$AuditRules,$InheritType,$AuditPropagationFlags,$AuditType)
+
+try {
+  $ACL = Get-Acl -Audit -ErrorAction Stop $TargetRegistry
+  $ACL.RemoveAuditRule($AuditRule)
+  Write-Host "Excluding Audit>",$TargetRegistry
+  $ACL | Set-Acl -Path $TargetRegistry -ErrorAction Stop
+  Get-Acl $TargetRegistry -Audit | Select Path -ExpandProperty Audit | fl *
+} catch {
+  Write-Error -ErrorRecord $_
+}
+Write-Host "Audit Policy applied successfully."

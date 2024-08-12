@@ -1,0 +1,18 @@
+---
+
+- name: Ensure ansible directories exist
+  ansible.windows.win_file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ win_temp_dir }}"
+    - "{{ win_log_dir }}"
+
+- name: Import windows-audit
+  ansible.builtin.import_tasks: windows-audit.yml
+- name: Import windows-audit-files
+  ansible.builtin.import_tasks: windows-audit-files.yml
+  when: win_audit_files|bool
+- name: Import windows-audit-reg
+  ansible.builtin.import_tasks: windows-audit-reg.yml
+  when: win_audit_registry|bool

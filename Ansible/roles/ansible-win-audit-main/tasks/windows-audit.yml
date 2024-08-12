@@ -1,0 +1,11 @@
+---
+
+- name: Common | Configure Windows Audit policies
+  ansible.windows.win_command: AuditPol /Set /Category:"{{ item }}" /Failure:Enable /Success:Enable
+  with_items: "{{ win_auditpol_enable }}"
+
+- name: Specific | Configure Windows Audit policies
+  ansible.windows.win_command: >
+    AuditPol /Set /Category:"{{ item.cat }}" /Subcategory:"{{ item.sub }}" /Failure:{{ item.fail | ternary('Enable', 'Disable') }} /Success:{{ item.success | ternary('Enable', 'Disable') }}
+  with_items: "{{ win_auditpol_subcat_enable }}"
+  failed_when: false

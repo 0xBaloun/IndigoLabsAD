@@ -1,0 +1,14 @@
+---
+
+- name: Upload Enable File Auditing script
+  ansible.windows.win_template:
+    src: EnableFileAudit.ps1.j2
+    dest: "{{ win_temp_dir }}\\EnableFileAudit.ps1"
+
+- name: Enable File auditing for selected paths
+  ansible.windows.win_shell: "Powershell -Exec Bypass -File \"{{ win_temp_dir }}\\EnableFileAudit.ps1\" \"{{ item }}\""
+  with_items: "{{ win_audit_filepaths }}"
+  register: setacl_results
+- name: Debug | setacl_results
+  ansible.builtin.debug:
+    var: setacl_results

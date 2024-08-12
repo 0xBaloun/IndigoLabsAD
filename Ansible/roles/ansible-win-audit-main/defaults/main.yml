@@ -1,0 +1,209 @@
+---
+# + Windows security audit events
+# https://www.microsoft.com/en-us/download/details.aspx?id=50034
+
+win_temp_dir: 'c:\Program Files\ansible'
+win_log_dir: 'c:\ProgramData\ansible\log'
+
+## Warning! Enabling all those will generate *lot* of logs
+win_auditpol_enable:
+  - Account Logon
+  - Object Access
+  - Privilege Use
+  - Detailed Tracking
+  - Policy Change
+  # - DS Access
+
+win_auditpol_subcat_enable:
+  - { cat: 'Account Management', sub: 'Application Group Management', fail: true, success: true }
+  - { cat: 'Account Management', sub: 'Computer Account Management', fail: true, success: true }
+  - { cat: 'Account Management', sub: 'Distribution Group Management', fail: true, success: true }
+  - { cat: 'Account Management', sub: 'Security Group Management', fail: true, success: true }
+  - { cat: 'Account Management', sub: 'User Account Management', fail: false, success: true }
+  - { cat: 'Account Management', sub: 'Other Account Management Events', fail: true, success: true }
+  - { cat: 'Account Management', sub: 'Security Group Management', fail: true, success: true }
+  - { cat: 'Account Management', sub: 'User Account Management', fail: true, success: true }
+  - { cat: 'DS Access', sub: 'Directory Service Changes', fail: false, success: true }
+  - { cat: 'DS Access', sub: 'Directory Service Replication', fail: false, success: true }
+  - { cat: 'Object Access', sub: 'Removable Storage', fail: true, success: true }
+  # - { cat: 'Logon/Logoff', sub: 'Group Membership', fail: false, success: true }
+  # - { cat: 'Detailed Tracking', sub: 'PNP Activity', fail: false, success: true }
+  - { cat: 'System', sub: 'IPSec Driver', fail: true, success: true }
+  - { cat: 'System', sub: 'Security System Extension', fail: true, success: true }
+  # https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-other-account-logon-events
+  - { cat: 'Account Logon', sub: 'Other Account Logon Events', fail: true, success: true }
+  # - { cat: '', sub: '', fail: true, success: true }
+  # For DC
+
+# https://adsecurity.org/wp-content/uploads/2017/04/2017-BSidesCharm-DetectingtheElusive-ActiveDirectoryThreatHunting-Final.pdf p50
+# win_auditpol_subcat_enable:
+#   - { cat: 'Account Logon', sub: 'Credential Validation', fail: true, success: true }
+#   - { cat: 'Account Logon', sub: 'Kerberos Authentication Service', fail: true, success: true }
+#   - { cat: 'Account Logon', sub: 'Kerberos Service Ticket Operations', fail: true, success: true }
+#   - { cat: 'Account Management', sub: 'Application Group Management', fail: true, success: true }
+#   - { cat: 'Account Management', sub: 'Computer Account Management', fail: true, success: true }
+#   - { cat: 'Account Management', sub: 'Other Account Management', fail: true, success: true }
+#   - { cat: 'Account Management', sub: 'Distribution Group Management', fail: true, success: true }
+#   - { cat: 'Account Management', sub: 'Security Group Management', fail: true, success: true }
+#   - { cat: 'Account Management', sub: 'User Account Management', fail: true, success: true }
+#   - { cat: 'Detailed Tracking', sub: 'DPAPI Activity', fail: true, success: true }
+#   - { cat: 'Detailed Tracking', sub: 'Process Creation', fail: true, success: true }
+#   - { cat: 'DS Access', sub: 'Directory Service Access', fail: true, success: true }
+#   - { cat: 'DS Access', sub: 'Directory Service Changes', fail: true, success: true }
+#   - { cat: 'Logon and Logoff', sub: 'Account Lockout', fail: false, success: true }
+#   - { cat: 'Logon and Logoff', sub: 'Logoff', fail: false, success: true }
+#   - { cat: 'Logon and Logoff', sub: 'Logon', fail: true, success: true }
+#   - { cat: 'Logon and Logoff', sub: 'Special Logon', fail: true, success: true }
+#   - { cat: 'System', sub: 'IPSec Driver', fail: true, success: true }
+#   - { cat: 'System', sub: 'Security State Change', fail: true, success: true }
+#   - { cat: 'System', sub: 'Security System Extension', fail: true, success: true }
+#   - { cat: 'System', sub: 'Security System Integrity', fail: true, success: true }
+
+# https://blogs.technet.microsoft.com/jepayne/2015/11/26/tracking-lateral-movement-part-one-special-groups-and-specific-service-accounts/
+win_audit_specialgroups_sid:
+  # Local Accounts
+  - S-1-5-113
+  # Domain Admins:
+  # - S-1-5-21-[DOMAIN]-512
+  # Enterprise Admins:
+  # - S-1-5-21-[FORESTROOTDOMAIN]-519
+  # Administrators (Could be noisy)
+  - S-1-5-32-544
+
+# https://technet.microsoft.com/en-us/library/ff730951.aspx
+win_audit_files: true
+win_fileauditrules: "Write,WriteData,Delete,DeleteSubdirectoriesAndFiles,ChangePermissions,Takeownership"
+win_audit_filepaths:
+  - C:\Users\Administrator\AppData\Local
+  - C:\Users\Administrator\AppData\Roaming
+  - C:\Users\Public
+  - C:\Windows\System32\drivers\etc\hosts
+  - C:\inetpub\wwwroot
+  - 'C:\Program Files\LAPS\CSE\AdmPwd.dll'
+
+win_audit_registry: true
+win_regauditrules: "SetValue,Delete,ChangePermissions,TakeOwnership"
+win_audit_regpaths:
+  - { k: 'HKCU:\Control Panel\Desktop', i: 'ContainerInherit' }
+  - { k: 'HKCU:\Environment', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server', i: 'ContainerInherit' }
+  # https://www.malwarearchaeology.com/logging/
+  # https://static1.squarespace.com/static/552092d5e4b0661088167e5c/t/5a00963153450a8779b23489/1509987890282/Windows+Registry+Auditing+Cheat+Sheet+ver+Nov+2017.pdf
+  # Note: didn't replicate User per sid keys
+  # THIS KEY ONLY: (none)
+  - { k: 'USERS:\.DEFAULT\Control Panel\Desktop', i: 'None' }
+  # THIS KEY AND SUBKEYS: (containerinherit)
+  - { k: 'USERS:\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Run', i: 'ContainerInherit' }
+  - { k: 'USERS:\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\RunOnce', i: 'ContainerInherit' }
+  - { k: 'USERS:\.DEFAULT\Software\Microsoft\Office\Outlook\Addins', i: 'ContainerInherit' }
+  - { k: 'USERS:\.DEFAULT\Software\Microsoft\Office\PowerPoint\Addins', i: 'ContainerInherit' }
+  - { k: 'USERS:\.DEFAULT\Software\Microsoft\Office\Word\Addins', i: 'ContainerInherit' }
+  - { k: 'USERS:\.DEFAULT\Software\Microsoft\Internet Explorer\UrlSearchHooks', i: 'ContainerInherit' }
+  # THIS KEY ONLY: (none)
+  - { k: 'HKLM:\Software\Microsoft\WBEM\CIMOM', i: 'None' }
+  - { k: 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Accessibility\ATs', i: 'None' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control', i: 'None' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\Lsa', i: 'None' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\SecurityProviders\SecurityProviders', i: 'None' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\SecurityProviders\SecurityProviders\WDigest', i: 'None' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\Terminal Server\Wds\rdpwd', i: 'None' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\Terminal Server\AddIns', i: 'None' }
+  # THIS KEYAND ALL SUBKEYS: (containerinherit)
+  - { k: 'HKLM:\Software\Classes\*\ShellEx', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Classes\AllFileSystemObjects\ShellEx', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Classes\Directory\ShellEx', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Classes\Folder\ShellEx', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Classes\Protocols\Filter', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Classes\Protocols\Handler', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Classes\CLSID\{083863F1-70DE-11d0-BD40-00A0C911CE86}\Instance', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Classes\Htmlfile\Shell\Open\Command', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Clients\Mail', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\.NETFramework', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Active Setup\Installed Components', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Internet Explorer\Toolbar', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg\{SIP Guid}', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{SIP Guid}', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Cryptography\Providers\Trust\FinalPolicy\{SIP Guid}', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Office\Outlook\Addins', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Office\Excel\Addins', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Office\PowerPoint\Addins', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Office\Word\Addins', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Terminal Server Client', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\VBA\Monitors', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\WBEM\ESS', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\App Paths', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Run', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Authentication\Credential Provider Filters', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Authentication\PLAP Providers', i: 'ContainerInherit' }
+  # THIS KEY AND ALL SUBKEYS: (containerinherit)
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\ShellServiceObjects', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\ShellExecuteHooks', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\TBDEn', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Group Policy\Scripts', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System\Audit', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Shell Extensions', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\AeDebug', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Drivers32', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Font Drivers', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\SystemRestore', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Windows\IconServiceLib', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Windows', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Policies\Microsoft\Windows\System\Scripts', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Policies\Microsoft\PowerShell', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\SafeBoot', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\Session Manager\Environment', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\Print\Monitors', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\NetworkProvider\Order', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\Terminal Server\Wds\rdpwd\StartupPrograms', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Services', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\services\NTDS', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Services\RemoteAccess', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Services\WinSock2', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\Session Manager', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\Print\Monitors', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\NetworkProvider\Order', i: 'ContainerInherit' }
+  - { k: 'HKLM:\System\CurrentControlSet\Control\Terminal Server\Wds\rdpwd\StartupPrograms', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Classes\*\ShellEx', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Classes\AllFileSystemObjects\ShellEx', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Classes\Directory\ShellEx', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Classes\Folder\ShellEx', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Classes\CLSID\{083863F1-70DE-11d0-BD40-00A0C911CE86}\Instance', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg\{SIP Guid}', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\{SIP Guid}', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Cryptography\Providers\Trust\FinalPolicy\{SIP Guid}', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\.NETFramework', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Active Setup\Installed Components', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Office\Outlook\Addins', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Office\Excel\Addins', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Office\PowerPoint\Addins', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Office\Word\Addins', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Run', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\RunOnce', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellServiceObjects', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellExecuteHooks', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Drivers32', i: 'ContainerInherit' }
+  - { k: 'HKLM:\Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options', i: 'ContainerInherit' }
+  # MUICACHE
+  - { k: 'HKCU:\Software\Microsoft\Windows\ShellNoRoam\MUICache', i: 'ContainerInherit' }
+  - { k: 'HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MUICache', i: 'ContainerInherit' }
+  - { k: 'HKCR:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MUICache', i: 'ContainerInherit' }
+
+win_audit_regpaths_exclude:
+  - { k: 'HKLM:\SYSTEM\CurrentControlSet\services\Tcpip', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SYSTEM\CurrentControlSet\services\VSS', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SYSTEM\CurrentControlSet\services\Netlogon', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SYSTEM\CurrentControlSet\services\BITS', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SYSTEM\CurrentControlSet\services\WmiApRpl', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SYSTEM\CurrentControlSet\services\SharedAccess\Epoch', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SYSTEM\CurrentControlSet\services\Shared Access\Epoch2', i: 'ContainerInherit' }
+  - { k: 'HKLM:\SYSTEM\CurrentControlSet\services\rdyboost\Parameters', i: 'ContainerInherit' }

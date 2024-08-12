@@ -1,0 +1,9 @@
+---
+# https://blogs.technet.microsoft.com/jepayne/2015/11/26/tracking-lateral-movement-part-one-special-groups-and-specific-service-accounts/
+
+- name: Set Windows special group for auditing
+  ansible.windows.win_regedit:
+    key: HKLM:\System\CurrentControlSet\Control\LSA\Audit\SpecialGroups
+    value: SpecialGroups
+    data: "{{ win_audit_specialgroups_sid | default('') }}"
+    datatype: string

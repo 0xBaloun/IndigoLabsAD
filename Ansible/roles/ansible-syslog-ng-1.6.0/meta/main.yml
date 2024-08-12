@@ -1,0 +1,27 @@
+---
+galaxy_info:
+  role_name: syslog_ng
+  namespace: bodsch
+
+  author: Bodo Schulz
+  description: Manage syslog-ng configuration
+  license: Apache
+
+  min_ansible_version: "2.10"
+  platforms:
+    - name: ArchLinux
+    - name: Debian
+      versions:
+        # 10
+        - buster
+        - bullseye
+    - name: Ubuntu
+      versions:
+        # 20.04
+        - focal
+
+  galaxy_tags:
+    - system
+    - syslog
+
+dependencies: []
